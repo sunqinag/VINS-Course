@@ -19,12 +19,12 @@ Estimator::Estimator() : f_manager{Rs}
     {
         pre_integrations[i] = nullptr;
     }
-    for(auto &it: all_image_frame)
+    for (auto &it : all_image_frame)
     {
         it.second.pre_integration = nullptr;
     }
     tmp_pre_integration = nullptr;
-    
+
     clearState();
 }
 
@@ -88,9 +88,9 @@ void Estimator::clearState()
 
     if (tmp_pre_integration != nullptr)
         delete tmp_pre_integration;
-    
+
     tmp_pre_integration = nullptr;
-    
+
     last_marginalization_parameter_blocks.clear();
 
     f_manager.clearState();
@@ -118,7 +118,7 @@ void Estimator::processIMU(double dt, const Vector3d &linear_acceleration, const
     if (frame_count != 0)
     {
         pre_integrations[frame_count]->push_back(dt, linear_acceleration, angular_velocity);
-        //if(solver_flag != NON_LINEAR)
+        // if(solver_flag != NON_LINEAR)
         tmp_pre_integration->push_back(dt, linear_acceleration, angular_velocity);
 
         dt_buf[frame_count].push_back(dt);
@@ -140,17 +140,17 @@ void Estimator::processIMU(double dt, const Vector3d &linear_acceleration, const
 
 void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header)
 {
-    //ROS_DEBUG("new image coming ------------------------------------------");
-    // cout << "Adding feature points: " << image.size()<<endl;
+    // ROS_DEBUG("new image coming ------------------------------------------");
+    //  cout << "Adding feature points: " << image.size()<<endl;
     if (f_manager.addFeatureCheckParallax(frame_count, image, td))
         marginalization_flag = MARGIN_OLD;
     else
         marginalization_flag = MARGIN_SECOND_NEW;
 
-    //ROS_DEBUG("this frame is--------------------%s", marginalization_flag ? "reject" : "accept");
-    //ROS_DEBUG("%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
-    //ROS_DEBUG("Solving %d", frame_count);
-    // cout << "number of feature: " << f_manager.getFeatureCount()<<endl;
+    // ROS_DEBUG("this frame is--------------------%s", marginalization_flag ? "reject" : "accept");
+    // ROS_DEBUG("%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
+    // ROS_DEBUG("Solving %d", frame_count);
+    //  cout << "number of feature: " << f_manager.getFeatureCount()<<endl;
     Headers[frame_count] = header;
 
     ImageFrame imageframe(image, header);
@@ -169,7 +169,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             {
                 // ROS_WARN("initial extrinsic rotation calib success");
                 // ROS_WARN_STREAM("initial extrinsic rotation: " << endl
-                                                            //    << calib_ric);
+                //    << calib_ric);
                 ric[0] = calib_ric;
                 RIC[0] = calib_ric;
                 ESTIMATE_EXTRINSIC = 1;
@@ -210,7 +210,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     {
         TicToc t_solve;
         solveOdometry();
-        //ROS_DEBUG("solver costs: %fms", t_solve.toc());
+        // ROS_DEBUG("solver costs: %fms", t_solve.toc());
 
         if (failureDetection())
         {
@@ -225,8 +225,8 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         TicToc t_margin;
         slideWindow();
         f_manager.removeFailures();
-        //ROS_DEBUG("marginalization costs: %fms", t_margin.toc());
-        // prepare output of VINS
+        // ROS_DEBUG("marginalization costs: %fms", t_margin.toc());
+        //  prepare output of VINS
         key_poses.clear();
         for (int i = 0; i <= WINDOW_SIZE; i++)
             key_poses.push_back(Ps[i]);
@@ -240,7 +240,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 bool Estimator::initialStructure()
 {
     TicToc t_sfm;
-    //check imu observibility
+    // check imu observibility
     {
         map<double, ImageFrame>::iterator frame_it;
         Vector3d sum_g;
@@ -258,14 +258,14 @@ bool Estimator::initialStructure()
             double dt = frame_it->second.pre_integration->sum_dt;
             Vector3d tmp_g = frame_it->second.pre_integration->delta_v / dt;
             var += (tmp_g - aver_g).transpose() * (tmp_g - aver_g);
-            //cout << "frame g " << tmp_g.transpose() << endl;
+            // cout << "frame g " << tmp_g.transpose() << endl;
         }
         var = sqrt(var / ((int)all_image_frame.size() - 1));
-        //ROS_WARN("IMU variation %f!", var);
+        // ROS_WARN("IMU variation %f!", var);
         if (var < 0.25)
         {
             // ROS_INFO("IMU excitation not enouth!");
-            //return false;
+            // return false;
         }
     }
     // global sfm
@@ -305,7 +305,7 @@ bool Estimator::initialStructure()
         return false;
     }
 
-    //solve pnp for all frame
+    // solve pnp for all frame
     map<double, ImageFrame>::iterator frame_it;
     map<int, Vector3d>::iterator it;
     frame_it = all_image_frame.begin();
@@ -385,11 +385,11 @@ bool Estimator::visualInitialAlign()
 {
     TicToc t_g;
     VectorXd x;
-    //solve scale
+    // solve scale
     bool result = VisualIMUAlignment(all_image_frame, Bgs, g, x);
     if (!result)
     {
-        //ROS_DEBUG("solve g failed!");
+        // ROS_DEBUG("solve g failed!");
         return false;
     }
 
@@ -408,7 +408,7 @@ bool Estimator::visualInitialAlign()
         dep[i] = -1;
     f_manager.clearDepth(dep);
 
-    //triangulat on cam pose , no tic
+    // triangulat on cam pose , no tic
     Vector3d TIC_TMP[NUM_OF_CAM];
     for (int i = 0; i < NUM_OF_CAM; i++)
         TIC_TMP[i].setZero();
@@ -445,7 +445,7 @@ bool Estimator::visualInitialAlign()
     double yaw = Utility::R2ypr(R0 * Rs[0]).x();
     R0 = Utility::ypr2R(Eigen::Vector3d{-yaw, 0, 0}) * R0;
     g = R0 * g;
-    //Matrix3d rot_diff = R0 * Rs[0].transpose();
+    // Matrix3d rot_diff = R0 * Rs[0].transpose();
     Matrix3d rot_diff = R0;
     for (int i = 0; i <= frame_count; i++)
     {
@@ -453,8 +453,8 @@ bool Estimator::visualInitialAlign()
         Rs[i] = rot_diff * Rs[i];
         Vs[i] = rot_diff * Vs[i];
     }
-    //ROS_DEBUG_STREAM("g0     " << g.transpose());
-    //ROS_DEBUG_STREAM("my R0  " << Utility::R2ypr(Rs[0]).transpose());
+    // ROS_DEBUG_STREAM("g0     " << g.transpose());
+    // ROS_DEBUG_STREAM("my R0  " << Utility::R2ypr(Rs[0]).transpose());
 
     return true;
 }
@@ -481,7 +481,7 @@ bool Estimator::relativePose(Matrix3d &relative_R, Vector3d &relative_T, int &l)
             if (average_parallax * 460 > 30 && m_estimator.solveRelativeRT(corres, relative_R, relative_T))
             {
                 l = i;
-                //ROS_DEBUG("average_parallax %f choose l %d and newest frame to triangulate the whole structure", average_parallax * 460, l);
+                // ROS_DEBUG("average_parallax %f choose l %d and newest frame to triangulate the whole structure", average_parallax * 460, l);
                 return true;
             }
         }
@@ -497,7 +497,7 @@ void Estimator::solveOdometry()
     {
         TicToc t_tri;
         f_manager.triangulate(Ps, tic, ric);
-        //cout << "triangulation costs : " << t_tri.toc() << endl;        
+        // cout << "triangulation costs : " << t_tri.toc() << endl;
         backendOptimization();
     }
 }
@@ -563,11 +563,11 @@ void Estimator::double2vector()
                                                      para_Pose[0][5])
                                              .toRotationMatrix());
     double y_diff = origin_R0.x() - origin_R00.x();
-    //TODO
+    // TODO
     Matrix3d rot_diff = Utility::ypr2R(Vector3d(y_diff, 0, 0));
     if (abs(abs(origin_R0.y()) - 90) < 1.0 || abs(abs(origin_R00.y()) - 90) < 1.0)
     {
-        //ROS_DEBUG("euler singular point!");
+        // ROS_DEBUG("euler singular point!");
         rot_diff = Rs[0] * Quaterniond(para_Pose[0][6],
                                        para_Pose[0][3],
                                        para_Pose[0][4],
@@ -635,9 +635,9 @@ void Estimator::double2vector()
         relo_relative_t = relo_r.transpose() * (Ps[relo_frame_local_index] - relo_t);
         relo_relative_q = relo_r.transpose() * Rs[relo_frame_local_index];
         relo_relative_yaw = Utility::normalizeAngle(Utility::R2ypr(Rs[relo_frame_local_index]).x() - Utility::R2ypr(relo_r).x());
-        //cout << "vins relo " << endl;
-        //cout << "vins relative_t " << relo_relative_t.transpose() << endl;
-        //cout << "vins relative_yaw " <<relo_relative_yaw << endl;
+        // cout << "vins relo " << endl;
+        // cout << "vins relative_t " << relo_relative_t.transpose() << endl;
+        // cout << "vins relative_yaw " <<relo_relative_yaw << endl;
         relocalization_info = 0;
     }
 }
@@ -646,17 +646,17 @@ bool Estimator::failureDetection()
 {
     if (f_manager.last_track_num < 2)
     {
-        //ROS_INFO(" little feature %d", f_manager.last_track_num);
-        //return true;
+        // ROS_INFO(" little feature %d", f_manager.last_track_num);
+        // return true;
     }
     if (Bas[WINDOW_SIZE].norm() > 2.5)
     {
-        //ROS_INFO(" big IMU acc bias estimation %f", Bas[WINDOW_SIZE].norm());
+        // ROS_INFO(" big IMU acc bias estimation %f", Bas[WINDOW_SIZE].norm());
         return true;
     }
     if (Bgs[WINDOW_SIZE].norm() > 1.0)
     {
-        //ROS_INFO(" big IMU gyr bias estimation %f", Bgs[WINDOW_SIZE].norm());
+        // ROS_INFO(" big IMU gyr bias estimation %f", Bgs[WINDOW_SIZE].norm());
         return true;
     }
     /*
@@ -669,12 +669,12 @@ bool Estimator::failureDetection()
     Vector3d tmp_P = Ps[WINDOW_SIZE];
     if ((tmp_P - last_P).norm() > 5)
     {
-        //ROS_INFO(" big translation");
+        // ROS_INFO(" big translation");
         return true;
     }
     if (abs(tmp_P.z() - last_P.z()) > 1)
     {
-        //ROS_INFO(" big z translation");
+        // ROS_INFO(" big z translation");
         return true;
     }
     Matrix3d tmp_R = Rs[WINDOW_SIZE];
@@ -684,8 +684,8 @@ bool Estimator::failureDetection()
     delta_angle = acos(delta_Q.w()) * 2.0 / 3.14 * 180.0;
     if (delta_angle > 50)
     {
-        //ROS_INFO(" big delta_angle ");
-        //return true;
+        // ROS_INFO(" big delta_angle ");
+        // return true;
     }
     return false;
 }
@@ -920,19 +920,21 @@ void Estimator::problemSolve()
 
         if (!ESTIMATE_EXTRINSIC)
         {
-            //ROS_DEBUG("fix extinsic param");
-            // TODO:: set Hessian prior to zero
+            // ROS_DEBUG("fix extinsic param");
+            //  TODO:: set Hessian prior to zero
             vertexExt->SetFixed();
         }
-        else{
-            //ROS_DEBUG("estimate extinsic param");
+        else
+        {
+            // ROS_DEBUG("estimate extinsic param");
         }
         problem.AddVertex(vertexExt);
-        pose_dim += vertexExt->LocalDimension();
+        pose_dim += vertexExt->LocalDimension(); // 7 dim?
     }
 
     for (int i = 0; i < WINDOW_SIZE + 1; i++)
     {
+        /// vertexCam包含了p，q，vertexVB包含了v，ba，bg，这是整个状态量，作为顶点
         shared_ptr<backend::VertexPose> vertexCam(new backend::VertexPose());
         Eigen::VectorXd pose(7);
         pose << para_Pose[i][0], para_Pose[i][1], para_Pose[i][2], para_Pose[i][3], para_Pose[i][4], para_Pose[i][5], para_Pose[i][6];
@@ -953,6 +955,7 @@ void Estimator::problemSolve()
     }
 
     // IMU
+    // imu为状态量的约束，作为边
     for (int i = 0; i < WINDOW_SIZE; i++)
     {
         int j = i + 1;
@@ -985,6 +988,7 @@ void Estimator::problemSolve()
             int imu_i = it_per_id.start_frame, imu_j = imu_i - 1;
             Vector3d pts_i = it_per_id.feature_per_frame[0].point;
 
+            // 逆深度已经放入state中作为顶点，则特侦点约束作为边存在
             shared_ptr<backend::VertexInverseDepth> verterxPoint(new backend::VertexInverseDepth());
             VecX inv_d(1);
             inv_d << para_Feature[feature_index][0];
@@ -1003,10 +1007,10 @@ void Estimator::problemSolve()
 
                 std::shared_ptr<backend::EdgeReprojection> edge(new backend::EdgeReprojection(pts_i, pts_j));
                 std::vector<std::shared_ptr<backend::Vertex>> edge_vertex;
-                edge_vertex.push_back(verterxPoint);
-                edge_vertex.push_back(vertexCams_vec[imu_i]);
+                edge_vertex.push_back(verterxPoint); //逆深度
+                edge_vertex.push_back(vertexCams_vec[imu_i]); //i,j对应姿态
                 edge_vertex.push_back(vertexCams_vec[imu_j]);
-                edge_vertex.push_back(vertexExt);
+                edge_vertex.push_back(vertexExt); // 外参
 
                 edge->SetVertex(edge_vertex);
                 edge->SetInformation(project_sqrt_info_.transpose() * project_sqrt_info_);
@@ -1034,6 +1038,7 @@ void Estimator::problemSolve()
         }
     }
 
+    // 用到的状态和观测量准备完毕，开始图优化
     problem.Solve(10);
 
     // update bprior_,  Hprior_ do not need update
@@ -1081,7 +1086,7 @@ void Estimator::backendOptimization()
     problemSolve();
     // 优化后的变量处理下自由度
     double2vector();
-    //ROS_INFO("whole time for solver: %f", t_solver.toc());
+    // ROS_INFO("whole time for solver: %f", t_solver.toc());
 
     // 维护 marg
     TicToc t_whole_marginalization;
@@ -1137,9 +1142,7 @@ void Estimator::backendOptimization()
             }
         }
     }
-    
 }
-
 
 void Estimator::slideWindow()
 {
