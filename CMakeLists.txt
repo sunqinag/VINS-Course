@@ -10,8 +10,13 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Eigen3 REQUIRED)
 find_package(Ceres REQUIRED)
 find_package(Pangolin REQUIRED)
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 3 QUIET)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
+
+if(NOT OpenCV_FOUND)
+    set(OpenCV_DIR "/home/sunqiang/app/opencv3/build") 
+    find_package(OpenCV REQUIRED)
+endif()
 
 
 message(WARNING "OpenCV_VERSION: ${OpenCV_VERSION}")
