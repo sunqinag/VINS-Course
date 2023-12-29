@@ -18,7 +18,7 @@ using namespace cv;
 using namespace Eigen;
 
 const int nDelayTimes = 2;
-string sData_path = "/home/sunqiang/data/EUROC_dataset/MH_05_difficult/mav0/";
+string sData_path = "/home/sunqiang/data/mav0/";
 string sConfig_path = "../config/";
 
 std::shared_ptr<System> pSystem;

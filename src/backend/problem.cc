@@ -82,6 +82,7 @@ void Problem::ResizePoseHessiansWhenAddingPose(shared_ptr<Vertex> v) {
 void Problem::ExtendHessiansPriorSize(int dim)
 {
     int size = H_prior_.rows() + dim;
+    cout << "先验原本: "<<H_prior_.rows()<<", 扩展后: " << size << endl;
     H_prior_.conservativeResize(size, size);
     b_prior_.conservativeResize(size);
 
@@ -167,8 +168,6 @@ bool Problem::RemoveEdge(std::shared_ptr<Edge> edge) {
 }
 
 bool Problem::Solve(int iterations) {
-
-
     if (edges_.size() == 0 || verticies_.size() == 0) {
         std::cerr << "\nCannot solve problem without edges or verticies" << std::endl;
         return false;
@@ -348,15 +347,15 @@ void Problem::MakeHessian() {
 
                 // 所有的信息矩阵叠加起来
                 H.block(index_i, index_j, dim_i, dim_j).noalias() += hessian;
-                if (j != i) {
+                cout << "index i: " << index_i << ", index j: " << index_j << ", dim i: " << dim_i << ", dim j: " << dim_j << endl;
+                if (j != i)
+                {
                     // 对称的下三角
                     H.block(index_j, index_i, dim_j, dim_i).noalias() += hessian.transpose();
-
                 }
             }
             b.segment(index_i, dim_i).noalias() -= drho * jacobian_i.transpose()* edge.second->Information() * edge.second->Residual();
         }
-
     }
     Hessian_ = H;
     b_ = b;
